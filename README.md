@@ -1,36 +1,173 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# ⚡ Offline-Aware Experiment Platform (Frontend)
 
-## Getting Started
+A responsive and resilient frontend built with **React**, **Axios**, and **Sonner Toasts**, designed to gracefully handle **offline submissions**, **network recovery**, and **rate-limited API requests**.  
+This project ensures a smooth user experience even when the user temporarily loses connectivity or exceeds request limits.
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## 🧭 Overview
+
+Users can create and interact with AI-driven "experiments" in real-time.  
+When network connectivity is lost, requests are **queued locally** and automatically retried once the connection is restored — all with clear user feedback.
+
+This project emphasizes:
+- **Offline-first UX**
+- **Request queue and retry logic**
+- **Rate-limiting protection**
+- **Clear toast-based status indicators**
+- **Modular architecture with maintainable separation of concerns**
+
+---
+
+## 🏗️ Architecture
+
+### **Core Structure**
+```
+src/
+├── components/        # Reusable UI components (toasts, buttons, tabs)
+├── hooks/             # Custom React hooks for API logic and network status
+├── lib/               # Utilities (axios instance, rate limiter, helpers)
+├── context/           # Global context providers (ExperimentsContext)
+├── pages/ or app/     # Main entry points and routes
+└── styles/            # Global and modular CSS/Tailwind
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### **Data Flow**
+1. **User Interaction**  
+   User types a message or creates an experiment → triggers `handleSubmit()`
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+2. **Network Check**  
+   A hook (`useOnlineStatus`) checks `navigator.onLine`.  
+   - If **offline**:  
+     A persistent toast displays, and the request is **queued** in memory.
+   - If **online**:  
+     The request is sent immediately to the backend.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+3. **Request Handling**  
+   The `axiosInstance` uses interceptors:
+   - Queues failed requests when offline
+   - Retries them when `window.online` event fires
+   - Displays Sonner toasts for rate limits, retries, and successes
 
-## Learn More
+4. **Rate Limiting**  
+   If backend returns HTTP **429**, a single toast (non-duplicating) shows:  
+   “Too many experiments created, please slow down.”
 
-To learn more about Next.js, take a look at the following resources:
+5. **Experiment Updates**  
+   Results are added to the `useExperiments` context and rendered instantly, maintaining UX continuity.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## ⚙️ Key Features
 
-## Deploy on Vercel
+- **Axios Offline Queue:**  
+  Stores pending requests while offline and retries automatically on reconnection.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Rate Limiting:**  
+  Prevents flooding the backend with excessive experiment requests.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Sonner Toast Feedback:**  
+  - Persistent toast for offline state  
+  - Dismisses only when reconnected  
+  - Retry action buttons for manual control
+
+- **React Query / Custom Hooks Integration:**  
+  Fetch and update data with intelligent caching and state synchronization.
+
+- **Framer Motion Animations:**  
+  Smooth transitions and status animations for UI feedback.
+
+---
+
+## 🌐 Environment Variables
+
+Create a `.env` file at the root:
+
+```bash
+NEXT_PUBLIC_BASE_URL=https://your-api-url.com
+```
+
+> ⚠️ Ensure `NEXT_PUBLIC_` prefix for all frontend-exposed variables.
+
+---
+
+## 🚀 Running the App
+
+### **Development**
+```bash
+npm install
+npm run dev
+```
+App will be available at `http://localhost:3000`
+
+### **Build for Production**
+```bash
+npm run build
+npm start
+```
+
+---
+
+## 🧠 Design Philosophy
+
+1. **Resilience by Default:**  
+   Network failures shouldn’t break UX. The app queues requests silently.
+
+2. **Transparency:**  
+   Users always know what’s happening — through toasts, retry prompts, and state indicators.
+
+3. **Modularity:**  
+   API logic, UI components, and business logic are isolated for easy testing and scalability.
+
+4. **Serverless-Aware Logging:**  
+   Vercel deployments skip file logging, using console output instead.
+
+---
+
+## 🧩 Technologies
+
+| Layer | Tech |
+|-------|------|
+| Framework | React + Vite / Next.js (depending on setup) |
+| Styling | TailwindCSS |
+| Animations | Framer Motion |
+| Networking | Axios with Interceptors |
+| State Management | React Context + Hooks |
+| Notifications | Sonner Toast |
+| Rate Limiting | Custom axios rate limiter wrapper |
+
+---
+
+## 🔬 Testing
+
+Use Jest or Vitest for testing hooks and axios behaviors.
+
+Example:
+```bash
+npm run test
+```
+
+Focus on:
+- Offline retry behavior
+- Duplicate toast prevention
+- Rate-limit handling (HTTP 429)
+
+---
+
+## 🧱 Future Enhancements
+
+- Persistent local queue using IndexedDB (for full offline PWA mode)
+- Background Sync API integration
+- Analytics for retry success rate
+- Sentry or Logtail integration for remote error logging
+
+---
+
+## 👥 Contributors
+
+**Frontend Lead:** Malikberry  
+**Mentorship / Architecture Guidance:** ChatGPT (AI System)
+
+---
+
+> “A resilient frontend isn’t just about uptime — it’s about user trust when things *don’t* go right.”
